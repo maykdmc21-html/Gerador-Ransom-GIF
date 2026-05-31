@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de GIF Ransom Note - Contorno</title>
+    <!-- Biblioteca estável para geração do GIF via CDN confiável -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.3.2/gifshot.min.js"></script>
+
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            text-align: center;
+            background: #1e1e1e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+        h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        input {
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            flex: 1;
+            background: #2d2d2d;
+            color: white;
+        }
+        input:focus {
+            outline: 2px solid #ff4757;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { 
+            background-color: #ff6b81; 
+        }
+        .loading { 
+            color: #ffa500; 
+            margin-top: 15px; 
+            display: none; 
+            font-weight: bold;
+        }
+        #result-gif {
+            margin-top: 20px;
+            border: 3px dashed #444;
+            padding: 10px;
+            background: #222; /* Fundo levemente cinza no container para conseguir enxergar a borda branca */
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        .instruction {
+            font-size: 13px;
+            color: #aaa;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Gerador Ransom GIF (Apenas Contorno)</h2>
+    <div class="input-group">
+        <input type="text" id="text-input" placeholder="Digite o nome aqui..." value="BANG">
+        <button onclick="gerarRansomGIF()">Criar GIF</button>
+    </div>
+    
+    <div class="loading" id="status">A processar frames...</div>
+    <div id="gif-container"></div>
+</div>
+
+<script>
+// Lista de fontes estáveis com formatos bem definidos para o contorno
+const fontesNativas = [
+    'Impact, sans-serif',
+    'Georgia, serif',
+    'Courier New, monospace',
+    'Arial Black, sans-serif',
+    'Times New Roman, serif',
+    'Trebuchet MS, sans-serif'
+];
+
+function gerarRansomGIF() {
+    const textoInput = document.getElementById('text-input').value.trim().toUpperCase();
+    if (!textoInput) {
+        alert("Por favor, digite um texto!");
+        return;
+    }
+
+    const statusDiv = document.getElementById('status');
+    const containerGif = document.getElementById('gif-container');
+    
+    statusDiv.style.display = 'block';
+    containerGif.innerHTML = '';
+
+    const framesDataUrls = [];
+    const totalFrames = 6;
+    
+    // Dimensões estimadas de área por caractere para evitar cortes
+    const largLetra = 55;
+    const altLetra = 75;
+    const espacamento = 2;
+    
+    const canvasTmp = document.createElement('canvas');
+    const ctx = canvasTmp.getContext('2d');
+    
+    canvasTmp.width = (textoInput.length * (largLetra + espacamento)) + 30;
+    canvasTmp.height = altLetra + 20;
+
+    for (let f = 0; f < totalFrames; f++) {
+        // Mantém transparente o fundo do canvas interno do GIF
+        ctx.clearRect(0, 0, canvasTmp.width, canvasTmp.height);
+        
+        let xAtual = 20;
+        let yBase = 10;
+
+        for (let i = 0; i < textoInput.length; i++) {
+            const caractere = textoInput[i];
+            
+            if (caractere === ' ') {
+                xAtual += largLetra / 2;
+                continue;
+            }
+            
+            const fonteEscolhida = fontesNativas[Math.floor(Math.random() * fontesNativas.length)];
+            const anguloRotacao = (Math.random() * 14 - 7) * Math.PI / 180; // Rotação sutil entre -7 e 7 graus
+            const tamanhoFonte = Math.floor(Math.random() * 8) + 42; // Variação de tamanho da fonte
+
+            ctx.save();
+            
+            // Define o centro de rotação da letra atual
+            const centroX = xAtual + largLetra / 2;
+            const centroY = yBase + altLetra / 2;
+            ctx.translate(centroX, centroY);
+            ctx.rotate(anguloRotacao);
+
+            ctx.font = `bold ${tamanhoFonte}px ${fonteEscolhida}`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Adiciona sombra bem suave atrás do contorno para simular o papel recortado
+            ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+
+            // PASSO 1: Desenhar o contorno grosso branco (Simulando o recorte de papel ao redor da letra)
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 14; // Grossura da borda branca externa
+            ctx.lineJoin = 'miter';
+            ctx.miterLimit = 2;
+            ctx.strokeText(caractere, 0, 0);
+
+            // Desativa a sombra temporariamente para a letra interna ficar nítida
+            ctx.shadowColor = "transparent";
+
+            // PASSO 2: Desenhar a letra preta preenchida por dentro
+            ctx.fillStyle = '#111111';
+            ctx.fillText(caractere, 0, 0);
+            
+            ctx.restore();
+            
+            xAtual += largLetra + espacamento;
+        }
+        
+        framesDataUrls.push(canvasTmp.toDataURL('image/png'));
+    }
+
+    // Criar o arquivo GIF animado transparente
+    gifshot.createGIF({
+        images: framesDataUrls,
+        gifWidth: canvasTmp.width,
+        gifHeight: canvasTmp.height,
+        interval: 0.14, 
+        numWorkers: 2,
+        transparent: true // Garante a transparência nativa do canal alpha no GIF
+    }, function (obj) {
+        statusDiv.style.display = 'none';
+        
+        if (!obj.error) {
+            const imgFinal = document.createElement('img');
+            imgFinal.id = 'result-gif';
+            imgFinal.src = obj.image;
+            containerGif.appendChild(imgFinal);
+            
+            const txtInstrucao = document.createElement('div');
+            txtInstrucao.className = 'instruction';
+            txtInstrucao.innerText = "✓ Perfeito! Clique com o botão direito para salvar o seu GIF transparente.";
+            containerGif.appendChild(txtInstrucao);
+        } else {
+            alert("Erro ao processar o GIF: " + obj.errorMsg);
+        }
+    });
+}
+</script>
+
+</body>
+</html>
